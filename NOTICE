@@ -1,0 +1,8 @@
+arc-sound-dashcam (Arc Sound inference: C library, CLI and Python reference)
+Copyright (c) 2026 Whissle Inc. Licensed under the Creative Commons Attribution-NonCommercial 4.0 International License
+(CC BY-NC 4.0) and the Whissle terms in LICENSE; commercial use requires a separate written licence from Whissle Inc.
+(ksingla@whissle.ai, https://whissle.ai).
+
+Third-party components keep their own licences:
+
+- cJSON 1.7.19 (third_party/cjson), MIT License, see third_party/cjson/LICENSE.
