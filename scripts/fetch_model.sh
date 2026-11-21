@@ -17,8 +17,8 @@ mkdir -p "$DEST"
 
 from_github() {
   if command -v gh >/dev/null && gh auth status >/dev/null 2>&1; then
-    gh release download "$TAG" -R "$GH_REPO" -D "$DEST" --clobber "${FILES[@]/#/-p=}" 2>/dev/null && return 0
-    for f in "${FILES[@]}"; do gh release download "$TAG" -R "$GH_REPO" -D "$DEST" --clobber -p "$f" || return 1; done
+    local f
+    for f in "${FILES[@]}"; do rm -f "$DEST/$f"; gh release download "$TAG" -R "$GH_REPO" -D "$DEST" -p "$f" || return 1; done
     return 0
   fi
   [ -n "${GITHUB_TOKEN:-}" ] || return 1
