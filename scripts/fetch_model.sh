@@ -2,12 +2,12 @@
 # Download the Arc Sound model files into ./model (or $1) and check their SHA-256 sums.
 #   scripts/fetch_model.sh [DEST_DIR]
 # Sources, in order:
-#   1. GitHub release assets of WhissleAI/arc-sound-dashcam (tag $ARCSOUND_TAG, default v1.0.0), with the gh CLI
-#      (gh auth login) or $GITHUB_TOKEN
+#   1. GitHub release assets of the private model repo $GH_REPO (default WhissleAI/arc-sound-models), tag $ARCSOUND_TAG
+#      (default dashcam-v1.0.0), with the gh CLI (gh auth login) or $GITHUB_TOKEN; needs read access to that repo
 #   2. Hugging Face $HF_REPO (default WhissleAI/arc-sound-dashcam) at $HF_REVISION (default main), with $HF_TOKEN
 set -euo pipefail
-GH_REPO="${GH_REPO:-WhissleAI/arc-sound-dashcam}"
-TAG="${ARCSOUND_TAG:-v1.0.0}"
+GH_REPO="${GH_REPO:-WhissleAI/arc-sound-models}"
+TAG="${ARCSOUND_TAG:-dashcam-v1.0.0}"
 HF_REPO="${HF_REPO:-WhissleAI/arc-sound-dashcam}"
 REV="${HF_REVISION:-main}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -43,8 +43,8 @@ from_hf() {
 if from_github; then echo "fetched from GitHub release ${GH_REPO}@${TAG}"
 elif from_hf; then echo "fetched from Hugging Face ${HF_REPO}@${REV}"
 else
-  echo "could not fetch the model: log in with 'gh auth login' (or set GITHUB_TOKEN) for the GitHub release," >&2
-  echo "or set HF_TOKEN for the Hugging Face repo; both are private" >&2
+  echo "could not fetch the model from ${GH_REPO}@${TAG}. The model files are private: ask Whissle Inc." >&2
+  echo "(ksingla@whissle.ai) for read access, then log in with 'gh auth login' (or set GITHUB_TOKEN)." >&2
   exit 1
 fi
 cd "$DEST"

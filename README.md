@@ -29,7 +29,7 @@ Sounds can overlap, so a horn during traffic noise is reported as two events.
 ```bash
 git clone git@github.com:WhissleAI/arc-sound-dashcam.git && cd arc-sound-dashcam
 ./scripts/fetch_model.sh                  # -> ./model (arcsound.safetensors, arcsound_meta.json), SHA-256 checked
-                                          #    needs gh auth login (or GITHUB_TOKEN), or HF_TOKEN
+                                          #    model files are private: needs read access (see below)
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j
 ctest --test-dir build --output-on-failure
 
@@ -51,6 +51,10 @@ Example output from a dashcam compilation (`start end category score`; music and
    14.50    14.90  scream_shout  0.39
    15.60    15.90  click_mech    0.16
 ```
+
+The model files are distributed separately from this code, as release assets of a private repository. Ask Whissle Inc.
+(ksingla@whissle.ai) for read access, then log in with `gh auth login` (or set `GITHUB_TOKEN`) before running
+`scripts/fetch_model.sh`.
 
 Options:
 
