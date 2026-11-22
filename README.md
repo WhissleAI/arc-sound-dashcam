@@ -44,12 +44,12 @@ arecord -q -f S16_LE -r 16000 -c 1 -t raw | ./build/arcsound_cli --live -
 Example output from a dashcam compilation (`start end category score`; music and traffic rows left out):
 
 ```
-    5.40     6.50  alarm_beep    0.91
-    8.20     8.50  crash_impact  0.40
-    8.20     8.60  incident      0.44
-   11.50    13.10  hum           0.20
-   14.50    14.90  scream_shout  0.39
-   15.60    15.90  click_mech    0.16
+    5.40     6.00  alarm_beep    0.95
+    6.50     6.80  click_mech    0.11
+    8.10     8.50  crash_impact  0.69
+    8.20     8.90  incident      0.55
+   18.40    18.70  click_mech    0.16
+   20.20    20.50  door          0.12
 ```
 
 The model files are distributed separately from this code, as release assets of a private repository. Ask Whissle Inc.
