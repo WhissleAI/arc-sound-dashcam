@@ -8,7 +8,7 @@ skids, glass, shouts and more, as a live timeline. This repository has the infer
 - **`arcsound_cli`**: a command-line tool for WAV files, ffmpeg pipes and live microphones.
 - **`python/arcsound`**: a small numpy reference implementation that the C library is tested against.
 
-The model is small (0.8 M parameters, 3.3 MB in float32) and causal: it never looks ahead. It is built to run on
+The model is small (1.9 M parameters, 7.6 MB in float32) and causal: it never looks ahead. It is built to run on
 small boards such as the Raspberry Pi Zero.
 
 ## Categories
@@ -41,15 +41,18 @@ ffmpeg -loglevel error -i drive.mp4 -f s16le -ac 1 -ar 16000 - | ./build/arcsoun
 arecord -q -f S16_LE -r 16000 -c 1 -t raw | ./build/arcsound_cli --live -
 ```
 
-Example output from a dashcam compilation (`start end category score`; music and traffic rows left out):
+Example output on the first 60 s of clip `tv1_000` of the public test set
+[WhissleAI/arc-sound-dashcam-test-v1](https://huggingface.co/datasets/WhissleAI/arc-sound-dashcam-test-v1)
+(`start end category score`; music and traffic rows left out):
 
 ```
-    5.50     6.30  alarm_beep    0.66
-    8.20     8.50  crash_impact  0.21
-    8.30     8.60  door          0.08
-   15.60    15.90  click_mech    0.09
-   18.40    23.00  click_mech    0.24
-   20.20    20.50  door          0.15
+    9.60    10.90  crash_impact  0.59
+    9.60    12.40  incident      0.82
+    9.80    13.00  debris        0.54
+   11.50    12.30  scream_shout  0.34
+   12.90    13.20  horn          0.38
+   12.90    13.20  alarm_beep    0.37
+   14.20    15.10  scream_shout  0.31
 ```
 
 The model files are distributed separately from this code, as release assets of a private repository. Ask Whissle Inc.
@@ -122,13 +125,13 @@ depend on chunk size: pushing one sample at a time or a whole file gives bit-ide
 
 ## Performance
 
-- **x86-64:** one core runs about 65x faster than real time (plain C, `-O3`, no SIMD).
+- **x86-64:** one core runs about 45x faster than real time (plain C, `-O3`, no SIMD).
 - **Raspberry Pi Zero:**
-  - Per 0.1 s frame the model does about 1.4 M multiply-adds, plus a 512-point FFT every 10 ms.
-  - A Pi Zero 2 W should run it in real time with room to spare. The original Pi Zero (ARM11, no SIMD) is expected
-    to be close to real time.
+  - Per 0.1 s frame the model does about 3 M multiply-adds, plus a 512-point FFT every 10 ms.
+  - A Pi Zero 2 W should run it in real time with room to spare. The original Pi Zero (ARM11, no SIMD) is probably
+    too slow for this model.
   - Neither board has been measured yet; measurements will be added here.
-- **Memory:** the weights take 3.3 MB, and each stream keeps about 0.4 MB plus 2.5 KB per second of audio
+- **Memory:** the weights take 7.6 MB, and each stream keeps about 0.5 MB plus 2.5 KB per second of audio
   (the per-frame probabilities; about 9 MB per hour).
 
 ## Tests
