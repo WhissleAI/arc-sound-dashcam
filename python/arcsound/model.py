@@ -156,7 +156,8 @@ class ArcSound:
 
 
 def decode(P, O, F, meta, sil=None):
-    """Hysteresis per category on 3-frame-smoothed presence, gap merge, minimum duration, then onset / offset
+    """Hysteresis per category on 3-frame-smoothed presence, gap merge, minimum duration (decode.per_cat overrides gap /
+    min_dur per category), then onset / offset
     refinement from the boundary heads for impulsive categories. Times in seconds (10 frames/s)."""
     dc = meta["decode"]; cats = meta["categories"]; imp = set(meta["impulsive"]); T = len(P)
     if sil is not None:
@@ -164,6 +165,8 @@ def decode(P, O, F, meta, sil=None):
     ev = []
     for j, c in enumerate(cats):
         on = dc["on"][c]; off = dc["off_ratio"] * on
+        pc = (dc.get("per_cat") or {}).get(c) or {}
+        gap, min_dur = pc.get("gap", dc["gap"]), pc.get("min_dur", dc["min_dur"])
         p = np.convolve(P[:, j], np.ones(3) / 3, "same")
         segs, act, t0 = [], False, 0
         for t in range(T + 1):
@@ -174,12 +177,12 @@ def decode(P, O, F, meta, sil=None):
                 act = False; segs.append([t0, t])
         merged = []
         for s in segs:
-            if merged and (s[0] - merged[-1][1]) / 10 <= dc["gap"]:
+            if merged and (s[0] - merged[-1][1]) / 10 <= gap:
                 merged[-1][1] = s[1]
             else:
                 merged.append(s)
         for a, b in merged:
-            if (b - a) / 10 < dc["min_dur"]:
+            if (b - a) / 10 < min_dur:
                 continue
             s, e = a / 10, b / 10
             if c in imp:

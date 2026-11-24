@@ -35,7 +35,7 @@ struct arcsound_model {
     int n_mels, D, L, N, P, H, R, A, NH, WIN, C, nimp;
     float rms_eps, ln_eps, log_eps, sil_db;
     double off_ratio, refine_min;   /* decode settings in double, as the reference decoder */
-    int min_frames, gap_frames;
+    int *min_frames, *gap_frames;   /* per category: decode.min_dur / decode.gap, overridden by decode.per_cat */
     float *window, *melfb, *mean, *std, *c1_w, *c1_b, *c2_w, *c2_b, *proj_w, *proj_b, *in_nw, *in_nb, *in_w, *in_b,
         *ad_dn, *ad_up, *out_nw, *head_w, *head_b;
     enc_layer *enc;
@@ -104,7 +104,7 @@ void arcsound_free(arcsound_model *m) {
     for (int i = 0; i < m->nblobs; i++) free(m->blobs[i]);
     free(m->blobs); free(m->enc); free(m->att);
     if (m->cats) for (int i = 0; i < m->C; i++) free(m->cats[i]);
-    free(m->cats); free(m->impulsive); free(m->thr); free(m);
+    free(m->cats); free(m->impulsive); free(m->thr); free(m->min_frames); free(m->gap_frames); free(m);
 }
 
 arcsound_model *arcsound_load(const char *dir, char *err, size_t errlen) {
@@ -130,6 +130,7 @@ arcsound_model *arcsound_load(const char *dir, char *err, size_t errlen) {
     }
     m->cats = (char **)calloc((size_t)m->C, sizeof(char *)); m->impulsive = (int *)calloc((size_t)m->C, sizeof(int));
     m->thr = (float *)calloc((size_t)m->C, sizeof(float));
+    m->min_frames = (int *)calloc((size_t)m->C, sizeof(int)); m->gap_frames = (int *)calloc((size_t)m->C, sizeof(int));
     cJSON *dc = cJSON_GetObjectItemCaseSensitive(meta, "decode"), *on = cJSON_GetObjectItemCaseSensitive(dc, "on");
     cJSON *imp = cJSON_GetObjectItemCaseSensitive(meta, "impulsive");
     for (int i = 0; i < m->C; i++) {
@@ -139,7 +140,12 @@ arcsound_model *arcsound_load(const char *dir, char *err, size_t errlen) {
         cJSON_ArrayForEach(x, imp) if (cJSON_IsString(x) && !strcmp(x->valuestring, nm)) m->impulsive[i] = 1;
     }
     m->off_ratio = jnum(dc, "off_ratio", 0.6); m->refine_min = jnum(dc, "refine_min", 0.3);
-    m->min_frames = (int)lround(jnum(dc, "min_dur", 0.3) * 10); m->gap_frames = (int)lround(jnum(dc, "gap", 0.5) * 10);
+    double md0 = jnum(dc, "min_dur", 0.3), gap0 = jnum(dc, "gap", 0.5);
+    cJSON *pc = cJSON_GetObjectItemCaseSensitive(dc, "per_cat");
+    for (int i = 0; i < m->C; i++) {
+        cJSON *o = cJSON_GetObjectItemCaseSensitive(pc, m->cats[i]);
+        m->min_frames[i] = (int)lround(jnum(o, "min_dur", md0) * 10); m->gap_frames[i] = (int)lround(jnum(o, "gap", gap0) * 10);
+    }
     m->sil_db = (float)jnum(dc, "silence_db", -70);
     cJSON_Delete(meta);
 
@@ -493,7 +499,7 @@ static float pm(const arcsound_stream *s, int t, int c) {   /* presence with dig
 static void emit(arcsound_stream *s, int a, int b, int c) {
     const arcsound_model *m = s->m;
     int C = m->C, T = s->frames;
-    if (b - a < m->min_frames) return;
+    if (b - a < m->min_frames[c]) return;
     double st = a / 10.0, en = b / 10.0;
     if (m->impulsive[c]) {
         int lo = a - 10 > 0 ? a - 10 : 0, hi = a + 10 < T ? a + 10 : T, best = lo;
@@ -514,7 +520,7 @@ static void emit(arcsound_stream *s, int a, int b, int c) {
 
 static void close_seg(arcsound_stream *s, int c, int a, int b) {
     cat_dec *d = &s->dec[c];
-    int gapf = s->m->gap_frames;
+    int gapf = s->m->gap_frames[c];
     if (d->has_pend && a - d->pb <= gapf) { d->pb = b; return; }
     if (d->has_pend) {
         if (s->done_n == s->done_cap) { s->done_cap = s->done_cap ? 2 * s->done_cap : 64; s->done = (seg *)realloc(s->done, sizeof(seg) * (size_t)s->done_cap); }
@@ -525,7 +531,7 @@ static void close_seg(arcsound_stream *s, int c, int a, int b) {
 
 static void decode(arcsound_stream *s) {
     const arcsound_model *m = s->m;
-    int C = m->C, gapf = m->gap_frames;
+    int C = m->C;
     /* frames whose silence status is known */
     int known = s->flushed ? s->frames : (s->sil_n < s->frames ? s->sil_n : s->frames);
     int lim = s->flushed ? s->frames + 1 : known - 1;   /* smoothed value at t needs t+1 (t = T: the closing zero) */
@@ -541,7 +547,7 @@ static void decode(arcsound_stream *s) {
     }
     for (int c = 0; c < C; c++) {   /* a pending segment is final once no later segment can merge into it */
         cat_dec *d = &s->dec[c];
-        if (d->has_pend && !d->act && (s->flushed || s->dec_t - d->pb > gapf)) {
+        if (d->has_pend && !d->act && (s->flushed || s->dec_t - d->pb > m->gap_frames[c])) {
             if (s->done_n == s->done_cap) { s->done_cap = s->done_cap ? 2 * s->done_cap : 64; s->done = (seg *)realloc(s->done, sizeof(seg) * (size_t)s->done_cap); }
             s->done[s->done_n++] = (seg){d->pa, d->pb, c}; d->has_pend = 0;
         }
