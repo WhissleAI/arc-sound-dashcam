@@ -3,11 +3,11 @@
 #   scripts/fetch_model.sh [DEST_DIR]
 # Sources, in order:
 #   1. GitHub release assets of the private model repo $GH_REPO (default WhissleAI/arc-sound-models), tag $ARCSOUND_TAG
-#      (default dashcam-v1.3.0), with the gh CLI (gh auth login) or $GITHUB_TOKEN; needs read access to that repo
+#      (default dashcam-v1.4.0), with the gh CLI (gh auth login) or $GITHUB_TOKEN; needs read access to that repo
 #   2. Hugging Face $HF_REPO (default WhissleAI/arc-sound-dashcam) at $HF_REVISION (default main), with $HF_TOKEN
 set -euo pipefail
 GH_REPO="${GH_REPO:-WhissleAI/arc-sound-models}"
-TAG="${ARCSOUND_TAG:-dashcam-v1.3.0}"
+TAG="${ARCSOUND_TAG:-dashcam-v1.4.0}"
 HF_REPO="${HF_REPO:-WhissleAI/arc-sound-dashcam}"
 REV="${HF_REVISION:-main}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

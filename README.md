@@ -46,14 +46,19 @@ Example output on the first 60 s of clip `tv1_000` of the public test set
 (`start end category score`; music and traffic rows left out):
 
 ```
-    9.60    10.90  crash_impact  0.59
-    9.60    12.40  incident      0.82
-    9.80    13.00  debris        0.54
-   11.50    12.30  scream_shout  0.34
-   12.90    13.20  horn          0.38
-   12.90    13.20  alarm_beep    0.37
-   14.20    15.10  scream_shout  0.31
+    9.60    10.20  crash_impact  0.34
+    9.60    11.80  wind_rain     0.23
+    9.60    12.40  incident      0.66
+    9.70    12.40  debris        0.32
+   10.20    12.30  scream_shout  0.36
+   12.80    13.20  horn          0.43
+   13.00    13.30  alarm_beep    0.27
+   14.90    15.20  scream_shout  0.25
+   58.60    58.90  crash_impact  0.40
 ```
+
+Reference labels in the same 60 s: crash_impact 9.5–9.7, incident 9.5–12.0, debris 9.6–12.0, scream_shout 14.1–15.0,
+click_mech 57.9–58.0.
 
 The model files are distributed separately from this code, as release assets of a private repository. Ask Whissle Inc.
 (ksingla@whissle.ai) for read access, then log in with `gh auth login` (or set `GITHUB_TOKEN`) before running
@@ -125,7 +130,7 @@ depend on chunk size: pushing one sample at a time or a whole file gives bit-ide
 
 ## Performance
 
-- **x86-64:** one core runs about 45x faster than real time (plain C, `-O3`, no SIMD).
+- **x86-64:** one core runs about 40x faster than real time (plain C, `-O3`, no SIMD).
 - **Raspberry Pi Zero:**
   - Per 0.1 s frame the model does about 3 M multiply-adds, plus a 512-point FFT every 10 ms.
   - A Pi Zero 2 W should run it in real time with room to spare. The original Pi Zero (ARM11, no SIMD) is probably
